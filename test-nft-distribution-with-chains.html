@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEFTIT Chain-Specific NFT Distribution Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .chain-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .chain-info h3 {
+            margin-bottom: 10px;
+        }
+        
+        .chain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .chain-card {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        
+        .chain-card strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stats-section {
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card.common { border-left-color: #8B4513; }
+        .stat-card.rare { border-left-color: #C0C0C0; }
+        .stat-card.legendary { border-left-color: #FFD700; }
+        .stat-card.platinum { border-left-color: #E5E4E2; }
+        
+        .stat-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-chain {
+            font-size: 11px;
+            color: #888;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .distribution-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn.secondary {
+            background: #6c757d;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .nft-preview {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 25px;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .nft-image {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 3px solid #ddd;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .nft-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .nft-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .nft-attribute {
+            margin-bottom: 10px;
+            font-size: 14px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .attribute-label {
+            font-weight: bold;
+            color: #666;
+            margin-right: 8px;
+        }
+        
+        .chain-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box strong {
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 NEFTIT Chain-Specific NFT Distribution Test</h1>
+        <p class="subtitle">Test NFT distribution with blockchain chain assignments</p>
+        
+        <!-- Chain Information -->
+        <div class="chain-info">
+            <h3>🌐 Supported Blockchain Networks</h3>
+            <div class="chain-grid">
+                <div class="chain-card">
+                    <strong>Polygon Amoy</strong>
+                    Chain ID: 80002
+                </div>
+                <div class="chain-card">
+                    <strong>Ethereum Sepolia</strong>
+                    Chain ID: 11155111
+                </div>
+                <div class="chain-card">
+                    <strong>BSC Testnet</strong>
+                    Chain ID: 97
+                </div>
+                <div class="chain-card">
+                    <strong>Avalanche Fuji</strong>
+                    Chain ID: 43113
+                </div>
+                <div class="chain-card">
+                    <strong>Arbitrum Sepolia</strong>
+                    Chain ID: 421614
+                </div>
+                <div class="chain-card">
+                    <strong>Optimism Sepolia</strong>
+                    Chain ID: 11155420
+                </div>
+                <div class="chain-card">
+                    <strong>Base Sepolia</strong>
+                    Chain ID: 84532
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- Rarity Statistics Summary -->
+        <div class="stats-section">
+            <h2 style="margin-bottom: 15px;">📊 Available NFTs by Rarity</h2>
+            <div id="raritySummaryContainer">
+                <div class="loading">Loading statistics...</div>
+            </div>
+        </div>
+
+        <!-- Distribution Form -->
+        <div class="distribution-form">
+            <h3>🎁 Distribute NFT to User</h3>
+            <div class="form-group">
+                <label for="walletAddress">Wallet Address:</label>
+                <input type="text" id="walletAddress" placeholder="0x..." value="0x1234567890123456789012345678901234567890">
+            </div>
+            <div class="form-group">
+                <label for="rarity">Rarity:</label>
+                <select id="rarity">
+                    <option value="common">Common</option>
+                    <option value="rare">Rare</option>
+                    <option value="legendary">Legendary</option>
+                    <option value="platinum">Platinum</option>
+                    <option value="silver">Silver</option>
+                    <option value="gold">Gold</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="targetChain">Target Chain:</label>
+                <select id="targetChain">
+                    <option value="polygon-amoy">Polygon Amoy</option>
+                    <option value="sepolia">Ethereum Sepolia</option>
+                    <option value="bsc-testnet">BSC Testnet</option>
+                    <option value="avalanche-fuji">Avalanche Fuji</option>
+                    <option value="arbitrum-sepolia">Arbitrum Sepolia</option>
+                    <option value="optimism-sepolia">Optimism Sepolia</option>
+                    <option value="base-sepolia">Base Sepolia</option>
+                </select>
+            </div>
+            <button class="btn" onclick="distributeNFT()" id="distributeBtn">
+                🎁 Distribute NFT
+            </button>
+            <button class="btn secondary" onclick="loadStats()">
+                🔄 Refresh Stats
+            </button>
+            
+            <div id="distributionResult" class="result"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://heacehinqihfexxrbwdr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlYWNlaGlucWloZmV4eHJid2RyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyMTMyMTMsImV4cCI6MjA2Njc4OTIxM30.9jBZljJ_uS1M2gX9u3Ao_7amPwGtI9myTrdK7cBK7-4';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Chain display names
+        const CHAIN_NAMES = {
+            'polygon-amoy': 'Polygon Amoy',
+            'sepolia': 'Ethereum Sepolia',
+            'bsc-testnet': 'BSC Testnet',
+            'avalanche-fuji': 'Avalanche Fuji',
+            'arbitrum-sepolia': 'Arbitrum Sepolia',
+            'optimism-sepolia': 'Optimism Sepolia',
+            'base-sepolia': 'Base Sepolia'
+        };
+
+        // Load CID pool statistics by chain
+        async function loadStats() {
+            try {
+                const { data, error } = await supabaseClient.rpc('get_available_cid_counts_by_chain');
+                
+                if (error) {
+                    throw new Error(`Database error: ${error.message}`);
+                }
+
+                displayStats(data || []);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('raritySummaryContainer').innerHTML = 
+                    `<div class="result error">Error loading statistics: ${error.message}</div>`;
+            }
+        }
+
+        function displayStats(stats) {
+            // Calculate rarity summary
+            const raritySummary = {};
+            stats.forEach(stat => {
+                if (!raritySummary[stat.rarity]) {
+                    raritySummary[stat.rarity] = { available: 0, total: 0 };
+                }
+                raritySummary[stat.rarity].available += stat.available_count;
+                raritySummary[stat.rarity].total += stat.total_count;
+            });
+
+            // Display rarity summary
+            const raritySummaryHTML = Object.entries(raritySummary)
+                .sort((a, b) => {
+                    const order = ['common', 'rare', 'legendary', 'platinum', 'silver', 'gold'];
+                    return order.indexOf(a[0].toLowerCase()) - order.indexOf(b[0].toLowerCase());
+                })
+                .map(([rarity, counts]) => {
+                    const rarityClass = rarity.toLowerCase();
+                    const percentage = ((counts.available / counts.total) * 100).toFixed(1);
+                    return `
+                        <div class="stat-card ${rarityClass}">
+                            <div class="stat-title">${rarity.toUpperCase()}</div>
+                            <div class="stat-value">${counts.available}</div>
+                            <div class="stat-chain">Available out of ${counts.total} (${percentage}%)</div>
+                        </div>
+                    `;
+                }).join('');
+
+            document.getElementById('raritySummaryContainer').innerHTML = `
+                <div class="stats-grid">
+                    ${raritySummaryHTML || '<p>No data available</p>'}
+                </div>
+            `;
+        }
+
+        // Create user if doesn't exist
+        async function ensureUserExists(walletAddress) {
+            try {
+                if (!walletAddress || typeof walletAddress !== 'string' || walletAddress.length < 10) {
+                    console.error('Invalid wallet address:', walletAddress);
+                    return false;
+                }
+
+                const { data: existingUser, error: checkError } = await supabaseClient
+                    .from('users')
+                    .select('wallet_address')
+                    .eq('wallet_address', walletAddress.toLowerCase())
+                    .single();
+
+                if (existingUser) {
+                    console.log('User already exists:', walletAddress);
+                    return true;
+                }
+
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .insert({
+                        wallet_address: walletAddress.toLowerCase(),
+                        display_name: `Test_User_${walletAddress.substring(0, 8)}`,
+                        provider: 'test',
+                        wallet_type: 'test',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                        last_login: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.error('Error creating user:', error);
+                    return false;
+                }
+
+                console.log('Created new user:', walletAddress);
+                return true;
+            } catch (error) {
+                console.error('Error ensuring user exists:', error);
+                return false;
+            }
+        }
+
+        // Distribute single NFT with optional chain specification
+        async function distributeNFT() {
+            const walletAddress = document.getElementById('walletAddress').value.trim();
+            const rarity = document.getElementById('rarity').value;
+            const targetChain = document.getElementById('targetChain').value || null;
+            const resultDiv = document.getElementById('distributionResult');
+            const btn = document.getElementById('distributeBtn');
+
+            if (!walletAddress) {
+                showResult(resultDiv, 'error', 'Please enter a wallet address');
+                return;
+            }
+
+            if (!walletAddress.match(/^0x[a-fA-F0-9]{40}$/) && walletAddress.length < 10) {
+                showResult(resultDiv, 'error', 'Please enter a valid wallet address (0x... format)');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '🔄 Distributing...';
+            
+            try {
+                const userCreated = await ensureUserExists(walletAddress);
+                if (!userCreated) {
+                    throw new Error('Failed to create or verify user');
+                }
+
+                const { data, error } = await supabaseClient.rpc('distribute_unique_nft_with_chain', {
+                    wallet_address: walletAddress.toLowerCase(),
+                    target_rarity: rarity,
+                    target_chain: targetChain
+                });
+
+                if (error) {
+                    throw new Error(`Database error: ${error.message}`);
+                }
+
+                if (!data?.success) {
+                    throw new Error(data?.error || 'Unknown distribution error');
+                }
+
+                showResult(resultDiv, 'success', 'NFT distributed successfully with chain assignment!', data.nft_data);
+                loadStats(); // Refresh stats
+                
+            } catch (error) {
+                console.error('Distribution error:', error);
+                showResult(resultDiv, 'error', `Distribution failed: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🎁 Distribute NFT';
+            }
+        }
+
+        // Batch distribute NFTs across all chains
+        async function batchDistribute() {
+            const resultDiv = document.getElementById('batchResult');
+            const btn = document.getElementById('batchBtn');
+            
+            const chains = ['polygon-amoy', 'sepolia', 'bsc-testnet', 'avalanche-fuji', 'arbitrum-sepolia', 'optimism-sepolia', 'base-sepolia'];
+            const rarities = ['common', 'rare', 'legendary'];
+            
+            const testDistributions = chains.map((chain, index) => ({
+                wallet: `0x${(1111111111111111111111111111111111111111 + index).toString(16).padStart(40, '0')}`,
+                rarity: rarities[index % rarities.length],
+                chain: chain
+            }));
+
+            btn.disabled = true;
+            btn.textContent = '🔄 Distributing Batch...';
+            
+            try {
+                const results = [];
+                
+                for (const dist of testDistributions) {
+                    try {
+                        const userCreated = await ensureUserExists(dist.wallet);
+                        if (!userCreated) {
+                            results.push({
+                                wallet: dist.wallet,
+                                rarity: dist.rarity,
+                                chain: dist.chain,
+                                success: false,
+                                error: 'Failed to create user',
+                                nft_data: null
+                            });
+                            continue;
+                        }
+
+                        const { data, error } = await supabaseClient.rpc('distribute_unique_nft_with_chain', {
+                            wallet_address: dist.wallet,
+                            target_rarity: dist.rarity,
+                            target_chain: dist.chain
+                        });
+
+                        results.push({
+                            wallet: dist.wallet,
+                            rarity: dist.rarity,
+                            chain: dist.chain,
+                            success: data?.success || false,
+                            error: error?.message || data?.error,
+                            nft_data: data?.nft_data
+                        });
+                    } catch (distError) {
+                        results.push({
+                            wallet: dist.wallet,
+                            rarity: dist.rarity,
+                            chain: dist.chain,
+                            success: false,
+                            error: distError.message,
+                            nft_data: null
+                        });
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                const successCount = results.filter(r => r.success).length;
+                const message = `Batch completed: ${successCount}/${results.length} NFTs distributed successfully`;
+                
+                showResult(resultDiv, successCount === results.length ? 'success' : 'error', message, null, results);
+                loadStats(); // Refresh stats
+                
+            } catch (error) {
+                console.error('Batch distribution error:', error);
+                showResult(resultDiv, 'error', `Batch distribution failed: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Distribute Across All Chains';
+            }
+        }
+
+        function showResult(resultDiv, type, message, nftData = null, batchResults = null) {
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+            
+            let html = `<strong>${message}</strong>`;
+            
+            if (nftData) {
+                const chainName = CHAIN_NAMES[nftData.assigned_chain] || nftData.assigned_chain;
+                
+                html += `
+                    <div class="nft-preview">
+                        <img src="${nftData.image}" alt="${nftData.name}" class="nft-image" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgdmlld0JveD0iMCAwIDI1MCAyNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyNTAiIGhlaWdodD0iMjUwIiBmaWxsPSIjZjBmMGYwIi8+Cjx0ZXh0IHg9IjEyNSIgeT0iMTI1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LXNpemU9IjE0Ij5JbWFnZSBOb3QgRm91bmQ8L3RleHQ+Cjwvc3ZnPg=='">
+                        <div class="nft-details">
+                            <div class="nft-title">
+                                ${nftData.name}
+                                <span class="chain-badge">🔗 ${chainName}</span>
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">📋 ID:</span> ${nftData.id}
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">💎 Rarity:</span> ${nftData.rarity}
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">🔗 Assigned Chain:</span> ${chainName}
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">🆔 Chain ID:</span> ${nftData.chain_id}
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">📄 Contract:</span> ${nftData.chain_contract_address}
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">🔐 CID:</span> ${nftData.cid}
+                            </div>
+                            <div class="nft-attribute">
+                                <span class="attribute-label">📝 Description:</span> ${nftData.description}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (batchResults) {
+                html += '<div style="margin-top: 20px;"><strong>📊 Batch Results:</strong><ul style="margin-top: 10px;">';
+                batchResults.forEach(result => {
+                    const status = result.success ? '✅' : '❌';
+                    const chainName = CHAIN_NAMES[result.chain] || result.chain;
+                    const error = result.error ? ` (${result.error})` : '';
+                    html += `<li style="margin-bottom: 8px;">${status} ${result.rarity} → ${chainName} → ${result.wallet.substring(0, 10)}...${error}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>

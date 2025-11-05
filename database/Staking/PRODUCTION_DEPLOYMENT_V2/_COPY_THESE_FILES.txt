@@ -1,0 +1,119 @@
+════════════════════════════════════════════════════════════════
+📦 PRODUCTION DEPLOYMENT V2 - FILE LIST
+════════════════════════════════════════════════════════════════
+
+Copy these files from the parent directory into this folder:
+
+FROM: database/Staking/
+TO:   database/Staking/PRODUCTION_DEPLOYMENT_V2/
+
+════════════════════════════════════════════════════════════════
+✅ REQUIRED SQL FILES (Run in order):
+════════════════════════════════════════════════════════════════
+
+1. FIX_01_SCHEMA_AND_FUNCTIONS_CORRECTED.sql
+   └─ Core schema functions
+   └─ Rarity-based rewards
+   └─ Time: 5 minutes
+
+2. FIX_01B_SERVICE_COMPATIBILITY_CORRECTED.sql
+   └─ Service layer compatibility
+   └─ Overloaded functions
+   └─ Time: 3 minutes
+
+3. FIX_02_REWARD_GENERATION_FINAL_V2.sql
+   └─ Reward generation logic
+   └─ Separate NFT/Token rows
+   └─ Cron job setup
+   └─ Time: 15 minutes
+
+4. FIX_03_CLAIM_FUNCTIONS_FINAL_V2.sql
+   └─ Claim functions
+   └─ TRUE separate claiming
+   └─ Independent buttons
+   └─ Time: 10 minutes
+
+5. FIX_04_SUMMARY_FUNCTIONS_FINAL.sql
+   └─ Summary functions
+   └─ Reporting queries
+   └─ Time: 10 minutes
+
+6. FIX_05_MIGRATION_FINAL.sql
+   └─ Data migration
+   └─ Auto backup creation
+   └─ Rate updates
+   └─ Time: 15 minutes
+
+════════════════════════════════════════════════════════════════
+📖 OPTIONAL DOCUMENTATION (Recommended):
+════════════════════════════════════════════════════════════════
+
+- COMPLETE_SCHEMA_ANALYSIS.md
+  └─ Full schema documentation
+
+- DEPLOY_V2_SEPARATE_CLAIMS.md
+  └─ V2 feature documentation
+
+- ACCUMULATIVE_REWARDS_EXPLAINED.md
+  └─ How rewards work
+
+- TERMINOLOGY_FIX.md
+  └─ Column name reference
+
+════════════════════════════════════════════════════════════════
+⚙️ HOW TO COPY:
+════════════════════════════════════════════════════════════════
+
+Windows:
+1. Select the files listed above
+2. Press Ctrl+C to copy
+3. Navigate to PRODUCTION_DEPLOYMENT_V2 folder
+4. Press Ctrl+V to paste
+
+OR via Command Line:
+cd database/Staking
+copy FIX_01_SCHEMA_AND_FUNCTIONS_CORRECTED.sql PRODUCTION_DEPLOYMENT_V2\
+copy FIX_01B_SERVICE_COMPATIBILITY_CORRECTED.sql PRODUCTION_DEPLOYMENT_V2\
+copy FIX_02_REWARD_GENERATION_FINAL_V2.sql PRODUCTION_DEPLOYMENT_V2\
+copy FIX_03_CLAIM_FUNCTIONS_FINAL_V2.sql PRODUCTION_DEPLOYMENT_V2\
+copy FIX_04_SUMMARY_FUNCTIONS_FINAL.sql PRODUCTION_DEPLOYMENT_V2\
+copy FIX_05_MIGRATION_FINAL.sql PRODUCTION_DEPLOYMENT_V2\
+
+════════════════════════════════════════════════════════════════
+⚠️ DON'T COPY THESE (Old/Wrong versions):
+════════════════════════════════════════════════════════════════
+
+❌ FIX_01_SCHEMA_AND_FUNCTIONS.sql (without "CORRECTED")
+❌ FIX_02_REWARD_GENERATION.sql (without "FINAL_V2")
+❌ FIX_02_REWARD_GENERATION_CORRECTED.sql (superseded by V2)
+❌ FIX_02_REWARD_GENERATION_FINAL.sql (superseded by V2)
+❌ FIX_03_CLAIM_FUNCTIONS.sql (old version)
+❌ FIX_03_CLAIM_FUNCTIONS_FINAL.sql (V1, not V2)
+❌ Any files without CORRECTED, FINAL, or V2 suffix
+
+════════════════════════════════════════════════════════════════
+✅ VERIFICATION:
+════════════════════════════════════════════════════════════════
+
+After copying, this folder should contain:
+
+Files:
+✓ 6 SQL files (FIX_01 through FIX_06)
+✓ README.md
+✓ DEPLOYMENT_GUIDE.md
+✓ _COPY_THESE_FILES.txt (this file)
+
+Total: 9 files minimum
+
+════════════════════════════════════════════════════════════════
+🚀 READY TO DEPLOY!
+════════════════════════════════════════════════════════════════
+
+Once files are copied:
+1. Open DEPLOYMENT_GUIDE.md
+2. Follow step-by-step instructions
+3. Deploy in order (1 through 6)
+
+Total time: ~60 minutes
+
+════════════════════════════════════════════════════════════════

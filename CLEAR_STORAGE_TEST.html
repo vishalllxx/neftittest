@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Storage Test</title>
+</head>
+<body>
+    <h1>Clear All Storage</h1>
+    <button onclick="clearAll()">Clear All Storage</button>
+    <button onclick="checkStorage()">Check Storage</button>
+    <pre id="output"></pre>
+    
+    <script>
+        function clearAll() {
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Clear IndexedDB
+            indexedDB.databases().then(databases => {
+                databases.forEach(db => {
+                    indexedDB.deleteDatabase(db.name);
+                });
+            });
+            
+            document.getElementById('output').textContent = 'All storage cleared!\n\nPlease refresh the page and test MetaMask connection.';
+        }
+        
+        function checkStorage() {
+            const output = {
+                localStorage: {},
+                sessionStorage: {}
+            };
+            
+            // Check localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                output.localStorage[key] = localStorage.getItem(key);
+            }
+            
+            // Check sessionStorage
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                output.sessionStorage[key] = sessionStorage.getItem(key);
+            }
+            
+            document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+        }
+    </script>
+</body>
+</html>
