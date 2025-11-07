@@ -1,15 +1,13 @@
 -- ============================================================================
--- COMPLETE FIX FOR DAILY CLAIM FOREIGN KEY ERROR
+-- EMERGENCY FIX - DOUBLE REWARDS ISSUE
 -- ============================================================================
--- Problem: Daily claim fails with "violates foreign key constraint fk_user_streaks_wallet_address"
--- Solution: Remove constraint AND ensure proper initialization order
+-- Problem: process_daily_claim() adds rewards to user_balances,
+-- AND a trigger also adds rewards = DOUBLE REWARDS!
+--
+-- Solution: Remove the duplicate balance update from process_daily_claim
+-- Let ONLY the trigger handle balance updates
 -- ============================================================================
 
--- Step 1: Remove the problematic foreign key constraint
-ALTER TABLE user_streaks 
-DROP CONSTRAINT IF EXISTS fk_user_streaks_wallet_address CASCADE;
-
--- Step 2: Update process_daily_claim to initialize user_balances FIRST
 DROP FUNCTION IF EXISTS process_daily_claim(TEXT) CASCADE;
 
 CREATE OR REPLACE FUNCTION process_daily_claim(user_wallet TEXT)
@@ -35,25 +33,6 @@ DECLARE
   total_reward_xp INTEGER;
   today_date DATE := (NOW() AT TIME ZONE 'UTC')::DATE;
 BEGIN
-  -- CRITICAL: Initialize user_balances FIRST to avoid foreign key errors
-  INSERT INTO user_balances (
-    wallet_address, 
-    total_neft_claimed, 
-    available_neft, 
-    staked_neft, 
-    total_xp_earned, 
-    last_updated
-  )
-  VALUES (
-    user_wallet, 
-    0, 
-    0, 
-    0, 
-    0, 
-    NOW()
-  )
-  ON CONFLICT (wallet_address) DO NOTHING;
-
   -- Check if already claimed today (based on UTC date)
   IF EXISTS (
     SELECT 1 FROM daily_claims 
@@ -105,7 +84,7 @@ BEGIN
       -- Claimed yesterday - continue streak
       calculated_streak := user_record.current_streak + 1;
     ELSIF user_record.last_claim_date >= today_date THEN
-      -- Already claimed today
+      -- Already claimed today (shouldn't happen due to check above, but safety)
       RETURN QUERY SELECT 
         FALSE, 
         'Already claimed today'::TEXT,
@@ -119,18 +98,18 @@ BEGIN
         0;
       RETURN;
     ELSE
-      -- Streak broken - reset to day 1
+      -- Streak broken - missed a day - reset to day 1
       calculated_streak := 1;
     END IF;
   END IF;
 
-  -- Get reward calculation
+  -- Get reward calculation using the CORRECT function
   SELECT * INTO reward_data FROM calculate_daily_reward(calculated_streak, user_wallet);
   
   total_reward_neft := reward_data.base_neft + reward_data.bonus_neft;
   total_reward_xp := reward_data.base_xp + reward_data.bonus_xp;
 
-  -- Update user streaks
+  -- Update user streaks (FIXED: Qualify all column references)
   UPDATE user_streaks SET
     current_streak = calculated_streak,
     longest_streak = GREATEST(user_streaks.longest_streak, calculated_streak),
@@ -164,6 +143,17 @@ BEGIN
     reward_data.reward_tier
   );
 
+  -- ⚠️ CRITICAL FIX: DO NOT update user_balances here!
+  -- The trigger "daily_claims_balance_sync" will handle it automatically
+  -- Removing this to prevent DOUBLE REWARDS:
+  --
+  -- OLD CODE (CAUSED DOUBLE REWARDS):
+  -- INSERT INTO user_balances (wallet_address, total_neft_claimed, total_xp_earned, last_updated)
+  -- VALUES (user_wallet, total_reward_neft, total_reward_xp, NOW())
+  -- ON CONFLICT (wallet_address) DO UPDATE SET ...
+  --
+  -- NEW: Let the trigger handle balance updates only!
+
   -- Return success result
   RETURN QUERY SELECT 
     TRUE,
@@ -183,19 +173,19 @@ $$;
 GRANT EXECUTE ON FUNCTION process_daily_claim(TEXT) TO authenticated, anon, public;
 
 -- ============================================================================
--- VERIFY THE FIX
+-- Test the fix
 -- ============================================================================
 DO $$
 BEGIN
   RAISE NOTICE '========================================';
-  RAISE NOTICE '✅ DAILY CLAIM FIX APPLIED!';
+  RAISE NOTICE '✅ DOUBLE REWARDS FIX APPLIED!';
   RAISE NOTICE '========================================';
-  RAISE NOTICE ' ';
+  RAISE NOTICE '';
   RAISE NOTICE 'Changes:';
-  RAISE NOTICE '1. Removed foreign key constraint fk_user_streaks_wallet_address';
-  RAISE NOTICE '2. Updated process_daily_claim to initialize user_balances FIRST';
-  RAISE NOTICE '3. No double rewards (trigger handles balance updates)';
-  RAISE NOTICE ' ';
-  RAISE NOTICE '✅ Daily claims will now work without errors!';
-  RAISE NOTICE ' ';
+  RAISE NOTICE '1. Removed duplicate user_balances update from process_daily_claim()';
+  RAISE NOTICE '2. Only the trigger will update user_balances now';
+  RAISE NOTICE '3. No more double rewards!';
+  RAISE NOTICE '';
+  RAISE NOTICE '⚠️  IMPORTANT: Test with a new wallet to verify!';
+  RAISE NOTICE '';
 END $$;

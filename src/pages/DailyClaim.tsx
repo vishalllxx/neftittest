@@ -455,7 +455,7 @@ export function DailyClaim({ open, onOpenChange, hideTrigger }: { open?: boolean
                   >
                     <div className="flex items-center gap-3">
                       <Gift className="h-5 w-5 text-[#5d43ef]" />
-                      <span className="text-sm sm:text-base font-medium">Next Reward</span>
+                      <span className="text-sm sm:text-base font-medium">{canClaim ? "Today's Reward" : "Next Reward"}</span>
                     </div>
                     <div className="flex gap-2">
                     <span className="bg-white text-[#5d43ef] px-2 py-1 rounded-xl sm:rounded-full text-center font-bold text-xs sm:text-sm">
